@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Who's That Teammate?</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0057B8;--surface:rgba(255,255,255,0.12);--surface2:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.2);--border2:rgba(255,255,255,0.35);
+  --accent:#FFD700;--accent2:#FFC200;--text:#ffffff;--muted:rgba(255,255,255,0.6);
+  --green:#4cda8a;--red:#ff6b6b;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;min-height:100vh}
+.app{max-width:700px;margin:0 auto;padding:2rem 1rem}
+.header{text-align:center;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.header h1{font-family:'DM Serif Display',serif;font-size:36px;color:var(--accent);letter-spacing:-0.5px;line-height:1.1}
+.header p{color:var(--muted);font-size:13px;margin-top:6px;font-weight:300}
+.nav{display:flex;gap:6px;margin-bottom:1.5rem;background:rgba(0,0,0,0.2);padding:4px;border-radius:10px}
+.nav-btn{flex:1;padding:9px;border:none;background:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .2s}
+.nav-btn.active{background:var(--accent);color:#003d8a;font-weight:700}
+.panel{display:none}.panel.active{display:block}
+.clue-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.25rem}
+.round-badge{display:inline-block;background:var(--accent);color:#003d8a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase}
+.clue-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:1rem;font-style:italic}
+.clues-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.clues-list li{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.85)}
+.clue-num{background:rgba(0,0,0,0.25);border:1px solid var(--border);min-width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+select,input[type=text],input[type=password],textarea{width:100%;padding:10px 14px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;appearance:none}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+option{background:#003d8a;color:#fff}
+.submit-btn{width:100%;padding:13px;background:var(--accent);color:#003d8a;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+.submit-btn:hover{background:var(--accent2)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.success{background:var(--green);color:#003d8a}
+.toast.error{background:var(--red);color:#fff}
+.lb-header{display:grid;grid-template-columns:44px 1fr 70px 70px;gap:8px;padding:8px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.lb-row{display:grid;grid-template-columns:44px 1fr 70px 70px;gap:8px;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
+.lb-row.rank1{border-color:var(--accent);background:rgba(255,215,0,0.12)}
+.lb-rank{font-size:16px;text-align:center}
+.lb-name{font-weight:500;font-size:14px}
+.lb-pts{font-weight:700;font-size:18px;color:var(--accent);text-align:center}
+.lb-streak{text-align:center;font-size:13px;color:var(--muted)}
+.lb-empty{text-align:center;padding:2.5rem;color:var(--muted);font-size:14px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.stat-num{font-family:'DM Serif Display',serif;font-size:30px;color:var(--accent)}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.admin-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.25rem}
+.admin-section h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:1rem}
+.admin-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.admin-row .form-group{flex:1;min-width:140px;margin:0}
+.action-btn{padding:9px 16px;border:1px solid var(--border2);background:rgba(0,0,0,0.2);color:var(--text);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
+.action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.action-btn.primary{background:var(--accent);color:#003d8a;border-color:var(--accent);font-weight:700}
+.action-btn.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.responses-table{width:100%;border-collapse:collapse;font-size:13px}
+.responses-table th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
+.responses-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:rgba(255,255,255,0.8)}
+.responses-table tr:last-child td{border-bottom:none}
+.correct-badge{background:rgba(76,218,138,.2);color:var(--green);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.wrong-badge{background:rgba(255,107,107,.2);color:var(--red);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.pending-badge{background:rgba(255,255,255,.1);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:20px}
+.lock-screen{text-align:center;padding:3rem 1rem}
+.lock-screen h2{font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent);margin-bottom:.5rem}
+.lock-screen p{color:var(--muted);font-size:13px;margin-bottom:1.5rem}
+.lock-input-row{display:flex;gap:8px;max-width:300px;margin:0 auto}
+.lock-input-row input{flex:1}
+.clue-inputs{display:flex;flex-direction:column;gap:8px}
+.clue-inputs textarea{resize:vertical;min-height:54px}
+.reveal-answer-box{background:rgba(255,215,0,0.15);border:1px solid var(--accent);border-radius:10px;padding:1rem;margin-top:1rem;font-size:15px;color:var(--accent);font-weight:600;text-align:center}
+.already-guessed{background:rgba(76,218,138,0.15);border:1px solid var(--green);border-radius:10px;padding:1rem;text-align:center;font-size:14px;color:var(--green);margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div id="team-lock" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem"><div style="text-align:center;max-width:360px;width:100%"><h1 style="font-family:'DM Serif Display',serif;font-size:36px;color:#FFD700;margin-bottom:8px">Who's That Teammate?</h1><p style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:2rem">Enter the team password to play</p><div style="display:flex;flex-direction:column;gap:10px"><input type="password" id="team-pw" placeholder="Team password..." onkeydown="if(event.key==='Enter')checkTeamPw()" style="text-align:center;font-size:16px"/><button onclick="checkTeamPw()" style="width:100%;padding:13px;background:#FFD700;color:#003d8a;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer">Let's Play! &#127919;</button><p id="team-pw-error" style="color:#ff6b6b;font-size:13px;display:none">Wrong password — try again!</p></div></div></div><div class="app" id="main-app" style="display:none">
+  <div class="header">
+    <h1>Who's That Teammate?</h1>
+    <p>Read the clues &middot; Make your guess &middot; Win the glory</p>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPanel('guess',this)">Daily Guess</button>
+    <button class="nav-btn" onclick="showPanel('leaderboard',this)">Leaderboard</button>
+    <button class="nav-btn" onclick="showPanel('history',this)">Past Rounds</button>
+    <button class="nav-btn" onclick="showPanel('admin',this)">Admin</button>
+  </div>
+
+  <!-- GUESS PANEL -->
+  <div class="panel active" id="panel-guess">
+    <div id="already-guessed-msg" style="display:none" class="already-guessed">
+      ✓ You already submitted a guess this round! Come back tomorrow for the next clue.
+    </div>
+    <div class="clue-card">
+      <div class="round-badge" id="g-round-badge">Round 1</div>
+      <div class="clue-title" id="g-clue-title">Who's the mystery teammate?</div>
+      <ul class="clues-list" id="g-clues"></ul>
+    </div>
+    <div id="reveal-box" style="display:none" class="reveal-answer-box"></div>
+    <div id="guess-form">
+      <div class="form-group">
+        <label>Your name</label>
+        <select id="g-name"><option value="">— Select your name —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Your guess — who do you think it is?</label>
+        <select id="g-guess"><option value="">— Select a teammate —</option></select>
+      </div>
+      <button class="submit-btn" onclick="submitGuess()">Submit My Guess 🎯</button>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD PANEL -->
+  <div class="panel" id="panel-leaderboard">
+    <div class="stats-row" id="lb-stats"></div>
+    <div class="lb-header">
+      <div>#</div><div>Name</div>
+      <div style="text-align:center">Points</div>
+      <div style="text-align:center">Streak</div>
+    </div>
+    <div id="lb-rows"></div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="panel" id="panel-admin">
+    <div id="admin-lock">
+      <div class="lock-screen">
+        <h2>Admin Access</h2>
+        <p>Enter your admin password to manage the game.</p>
+        <div class="lock-input-row">
+          <input type="password" id="admin-pw" placeholder="Password..." onkeydown="if(event.key==='Enter')checkAdmin()"/>
+          <button class="action-btn primary" onclick="checkAdmin()">Enter</button>
+        </div>
+        <p style="margin-top:14px;font-size:12px;color:var(--muted)">Default password: <strong style="color:var(--accent)">admin123</strong></p>
+      </div>
+    </div>
+    <div id="admin-content" style="display:none">
+      <div class="admin-section">
+        <h3>Game Status</h3>
+        <div class="admin-row">
+          <div class="form-group"><label>Current round</label><input type="text" id="a-round" readonly/></div>
+          <button class="action-btn primary" onclick="nextRound()">Next Round →</button>
+        </div>
+      </div>
+      <div class="admin-section">
+        <h3>Set Today's Clues</h3>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>Mystery person (the answer — hidden from players)</label>
+          <select id="a-answer"><option value="">— Select the mystery teammate —</option></select>
+        </div>
+        <div class="form-group">
+          <label>3 Fun fact clues</label>
+          <div class="clue-inputs">
+            <textarea id="a-clue1" placeholder="Clue 1..."></textarea>
+            <textarea id="a-clue2" placeholder="Clue 2..."></textarea>
+            <textarea id="a-clue3" placeholder="Clue 3..."></textarea>
+          </div>
+        </div>
+        <button class="action-btn primary" onclick="saveClues()">Save &amp; Publish Clues</button>
+      </div>
+      <div class="admin-section">
+        <h3>Reveal Answer &amp; Award Points</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">When ready, click below to reveal the answer. Everyone who guessed correctly gets +1 point automatically.</p>
+        <button class="action-btn primary" onclick="revealAnswer()">Reveal Answer &amp; Award Points</button>
+        <span id="reveal-status" style="font-size:13px;color:var(--muted);margin-left:10px;display:inline-block;margin-top:6px"></span>
+      </div>
+      <div class="admin-section">
+        <h3>Round Responses (<span id="response-count">0</span>)</h3>
+        <div style="overflow-x:auto">
+          <table class="responses-table">
+            <thead><tr><th>Name</th><th>Their Guess</th><th>Status</th></tr></thead>
+            <tbody id="responses-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAST ROUNDS PANEL -->
+  <div class="panel" id="panel-history">
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Names in alphabetical order
+const NAMES = ["Alex","Allie","Andy","Arif","Arthur","Ashish","Breanna","Brenda","Chelsea","Chris","Craig","Danielle","Dawn","Gerald","Jerry","Jodi","Joni","Julie","Kate","Keith","Kelli","Kou","Lacretia","Lin","Matthew","Michelle","Nafiz","Missy","Natalie","Pajas","Rachel","Rajesh","Sandhya","Shawn","Sheri","Sue","Todd","Tony","Trista"];
+
+// Populate all dropdowns alphabetically
+['g-name','g-guess','a-answer'].forEach(id => {
+  const el = document.getElementById(id);
+  NAMES.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n; o.textContent = n;
+    el.appendChild(o);
+  });
+});
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('wtt_game');
+    return s ? JSON.parse(s) : defaultState();
+  } catch(e) { return defaultState(); }
+}
+
+function defaultState() {
+  return { round:1, clues:['','',''], answer:'', revealed:false, responses:[], scores:{} };
+}
+
+function saveState(gs) {
+  try { localStorage.setItem('wtt_game', JSON.stringify(gs)); } catch(e) {}
+}
+
+let adminUnlocked = false;
+
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'leaderboard') renderLeaderboard();
+  if (id === 'guess') renderGuessPanel();
+  if (id === 'admin' && adminUnlocked) renderAdmin();
+  if (id === 'history') renderHistory();
+}
+
+function renderGuessPanel() {
+  const gs = loadState();
+  document.getElementById('g-round-badge').textContent = 'Round ' + gs.round;
+  const cl = document.getElementById('g-clues');
+  const filled = (gs.clues || []).filter(c => c && c.trim());
+
+  if (!filled.length) {
+    cl.innerHTML = '';
+    document.getElementById('g-clue-title').innerHTML = '<span style="color:var(--muted);font-size:14px;font-style:normal">Clues not posted yet — check back soon!</span>';
+    document.getElementById('guess-form').style.display = 'none';
+    document.getElementById('reveal-box').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('guess-form').style.display = 'block';
+  document.getElementById('g-clue-title').textContent = 'Who is Mystery Teammate #' + gs.round + '?';
+  cl.innerHTML = filled.map((c,i) => `<li><span class="clue-num">${i+1}</span><span>${c}</span></li>`).join('');
+
+  if (gs.revealed && gs.answer) {
+    document.getElementById('reveal-box').style.display = 'block';
+    document.getElementById('reveal-box').textContent = '🎉 The answer was: ' + gs.answer + '!';
+  } else {
+    document.getElementById('reveal-box').style.display = 'none';
+  }
+}
+
+function submitGuess() {
+  const name = document.getElementById('g-name').value;
+  const guess = document.getElementById('g-guess').value;
+  if (!name || !guess) { showToast('Please select your name and a guess.', 'error'); return; }
+  const gs = loadState();
+  if (!(gs.clues || []).filter(c => c && c.trim()).length) { showToast('No clues posted yet!', 'error'); return; }
+
+  const existing = gs.responses.findIndex(r => r.name === name && r.round === gs.round);
+  const entry = { name, guess, round: gs.round, correct: gs.revealed ? (guess === gs.answer) : null };
+  if (existing >= 0) gs.responses[existing] = entry;
+  else gs.responses.push(entry);
+
+  saveState(gs);
+  document.getElementById('g-name').value = '';
+  document.getElementById('g-guess').value = '';
+
+  if (gs.revealed) {
+    if (guess === gs.answer) {
+      showToast('✅ Correct! Well done ' + name + '!', 'success');
+      document.getElementById('already-guessed-msg').innerHTML = '✅ You guessed correctly! Great job!';
+      document.getElementById('already-guessed-msg').style.background = 'rgba(76,218,138,0.15)';
+      document.getElementById('already-guessed-msg').style.borderColor = 'var(--green)';
+      document.getElementById('already-guessed-msg').style.color = 'var(--green)';
+    } else {
+      showToast('❌ Wrong guess — better luck next round!', 'error');
+      document.getElementById('already-guessed-msg').innerHTML = '❌ Not quite! The answer was <strong>' + gs.answer + '</strong>. Better luck next round!';
+      document.getElementById('already-guessed-msg').style.background = 'rgba(255,107,107,0.15)';
+      document.getElementById('already-guessed-msg').style.borderColor = 'var(--red)';
+      document.getElementById('already-guessed-msg').style.color = 'var(--red)';
+    }
+  } else {
+    showToast('🎯 Guess submitted! Check back tomorrow for the answer!', 'success');
+    document.getElementById('already-guessed-msg').innerHTML = '🎯 Guess submitted! Check back tomorrow to see if you were right!';
+    document.getElementById('already-guessed-msg').style.background = 'rgba(76,218,138,0.15)';
+    document.getElementById('already-guessed-msg').style.borderColor = 'var(--green)';
+    document.getElementById('already-guessed-msg').style.color = 'var(--green)';
+  }
+  document.getElementById('already-guessed-msg').style.display = 'block';
+}
+
+function renderLeaderboard() {
+  const gs = loadState();
+  const people = NAMES.map(n => ({
+    name: n,
+    points: gs.scores[n] || 0,
+    streak: calcStreak(gs, n)
+  })).sort((a,b) => b.points - a.points || a.name.localeCompare(b.name));
+
+  const top = people[0];
+
+  document.getElementById('lb-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${gs.round}</div><div class="stat-lbl">Round</div></div>
+    <div class="stat-card"><div class="stat-num">${gs.responses.length}</div><div class="stat-lbl">Total Guesses</div></div>
+    <div class="stat-card"><div class="stat-num" style="font-size:18px">${top && top.points > 0 ? top.name.split(' ')[0] : '—'}</div><div class="stat-lbl">Leader</div></div>
+  `;
+
+  const withPoints = people.filter(p => p.points > 0 || p.streak > 0);
+  const rows = document.getElementById('lb-rows');
+  if (!withPoints.length) {
+    rows.innerHTML = '<div class="lb-empty">No points yet — be the first to guess correctly!</div>';
+    return;
+  }
+  let rank = 0, lastPts = -1;
+  rows.innerHTML = withPoints.map((p, i) => {
+    if (p.points !== lastPts) { rank = i + 1; lastPts = p.points; }
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    return `<div class="lb-row ${rank === 1 ? 'rank1' : ''}">
+      <div class="lb-rank">${medal}</div>
+      <div class="lb-name">${p.name}</div>
+      <div class="lb-pts">${p.points}</div>
+      <div class="lb-streak">${p.streak > 0 ? '🔥' + p.streak : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function calcStreak(gs, name) {
+  let s = 0;
+  for (let r = gs.round; r >= 1; r--) {
+    const resp = gs.responses.find(x => x.name === name && x.round === r && x.correct === true);
+    if (resp) s++; else break;
+  }
+  return s;
+}
+
+function checkAdmin() {
+  if (document.getElementById('admin-pw').value === 'admin123') {
+    adminUnlocked = true;
+    document.getElementById('admin-lock').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    renderAdmin();
+  } else {
+    showToast('Incorrect password', 'error');
+  }
+}
+
+function renderAdmin() {
+  const gs = loadState();
+  document.getElementById('a-round').value = gs.round;
+  document.getElementById('a-clue1').value = gs.clues[0] || '';
+  document.getElementById('a-clue2').value = gs.clues[1] || '';
+  document.getElementById('a-clue3').value = gs.clues[2] || '';
+  if (gs.answer) document.getElementById('a-answer').value = gs.answer;
+  document.getElementById('reveal-status').textContent = gs.revealed ? '✓ Revealed: ' + gs.answer : '';
+  renderResponses(gs);
+}
+
+function saveClues() {
+  const c1 = document.getElementById('a-clue1').value.trim();
+  const c2 = document.getElementById('a-clue2').value.trim();
+  const c3 = document.getElementById('a-clue3').value.trim();
+  const ans = document.getElementById('a-answer').value;
+  if (!c1 && !c2 && !c3) { showToast('Enter at least one clue.', 'error'); return; }
+  if (!ans) { showToast('Select the mystery teammate.', 'error'); return; }
+  const gs = loadState();
+  gs.clues = [c1, c2, c3];
+  gs.answer = ans;
+  gs.revealed = false;
+  saveState(gs);
+  showToast('Clues saved & published for round ' + gs.round + '!', 'success');
+  document.getElementById('reveal-status').textContent = '';
+}
+
+function revealAnswer() {
+  const gs = loadState();
+  if (!gs.answer) { showToast('No answer set yet.', 'error'); return; }
+  gs.revealed = true;
+  let awarded = 0;
+  gs.responses.filter(r => r.round === gs.round).forEach(r => {
+    r.correct = r.guess === gs.answer;
+    if (r.correct) {
+      gs.scores[r.name] = (gs.scores[r.name] || 0) + 1;
+      awarded++;
+    }
+  });
+  // Save to round history for past rounds view
+  if (!gs.roundHistory) gs.roundHistory = {};
+  gs.roundHistory[gs.round] = { clues: gs.clues, answer: gs.answer };
+  saveState(gs);
+  showToast('Revealed! ' + awarded + ' correct guess' + (awarded !== 1 ? 'es' : '') + ' awarded points.', 'success');
+  document.getElementById('reveal-status').textContent = '✓ Revealed: ' + gs.answer;
+  renderResponses(gs);
+}
+
+function renderResponses(gs) {
+  if (!gs) gs = loadState();
+  const rows = gs.responses.filter(r => r.round === gs.round);
+  document.getElementById('response-count').textContent = rows.length;
+  const tbody = document.getElementById('responses-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:1.2rem">No guesses yet this round.</td></tr>';
+    return;
+  }
+  const sorted = [...rows].sort((a,b) => a.name.localeCompare(b.name));
+  tbody.innerHTML = sorted.map(r => {
+    const b = r.correct === true
+      ? '<span class="correct-badge">Correct ✓</span>'
+      : r.correct === false
+        ? '<span class="wrong-badge">Wrong ✗</span>'
+        : '<span class="pending-badge">Pending</span>';
+    return `<tr><td>${r.name}</td><td>${r.guess}</td><td>${b}</td></tr>`;
+  }).join('');
+}
+
+function nextRound() {
+  const gs = loadState();
+  if (!confirm('Start round ' + (gs.round + 1) + '? This will clear current round responses.')) return;
+  gs.round++;
+  gs.clues = ['','',''];
+  gs.answer = '';
+  gs.revealed = false;
+  gs.responses = gs.responses.filter(r => r.round < gs.round);
+  saveState(gs);
+  renderAdmin();
+  showToast('Round ' + gs.round + ' started! 🎉', 'success');
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3200);
+}
+
+
+function renderHistory() {
+  var gs = loadState();
+  var container = document.getElementById('history-list');
+  var history = gs.roundHistory || {};
+  var pastRounds = [];
+  for (var r = 1; r < gs.round; r++) {
+    if (history[r]) {
+      pastRounds.push({ round: r, clues: history[r].clues, answer: history[r].answer });
+    }
+  }
+  if (!pastRounds.length) {
+    container.innerHTML = '<div style="text-align:center;padding:2.5rem;color:var(--muted);font-size:14px">No past rounds yet — check back after the first reveal!</div>';
+    return;
+  }
+  pastRounds.reverse();
+  var html = '';
+  for (var i = 0; i < pastRounds.length; i++) {
+    var rd = pastRounds[i];
+    var myGuess = null;
+    for (var j = 0; j < gs.responses.length; j++) {
+      if (gs.responses[j].round === rd.round) { myGuess = gs.responses[j]; break; }
+    }
+    var statusBadge = '';
+    if (myGuess) {
+      if (myGuess.correct) {
+        statusBadge = '<span style="background:rgba(76,218,138,.2);color:var(--green);font-size:12px;padding:3px 10px;border-radius:20px;font-weight:600">You got it!</span>';
+      } else {
+        statusBadge = '<span style="background:rgba(255,107,107,.2);color:var(--red);font-size:12px;padding:3px 10px;border-radius:20px;font-weight:600">You guessed: ' + myGuess.guess + '</span>';
+      }
+    } else {
+      statusBadge = '<span style="background:rgba(255,255,255,.1);color:var(--muted);font-size:12px;padding:3px 10px;border-radius:20px">Not attempted</span>';
+    }
+    var clueItems = '';
+    for (var c = 0; c < rd.clues.length; c++) {
+      if (rd.clues[c]) {
+        clueItems += '<li style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.85)">'
+          + '<span style="background:rgba(0,0,0,0.25);border:1px solid var(--border);min-width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0">' + (c+1) + '</span>'
+          + '<span>' + rd.clues[c] + '</span></li>';
+      }
+    }
+    var nameOptions = '<option value="">Your name...</option>';
+    var guessOptions = '<option value="">Your guess...</option>';
+    for (var n = 0; n < NAMES.length; n++) {
+      nameOptions += '<option value="' + NAMES[n] + '">' + NAMES[n] + '</option>';
+      guessOptions += '<option value="' + NAMES[n] + '">' + NAMES[n] + '</option>';
+    }
+    var bottomSection = '';
+    if (!myGuess) {
+      bottomSection = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
+        + '<select id="late-name-' + rd.round + '" style="flex:1;min-width:140px;padding:8px 12px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px">' + nameOptions + '</select>'
+        + '<select id="late-guess-' + rd.round + '" style="flex:1;min-width:140px;padding:8px 12px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px">' + guessOptions + '</select>'
+        + '<button onclick="submitLateGuess(' + rd.round + ','' + rd.answer + '')" style="padding:8px 16px;background:var(--accent);color:#003d8a;border:none;border-radius:8px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">Submit Guess</button>'
+        + '</div>';
+    } else {
+      bottomSection = '<div style="font-size:13px;color:var(--muted);padding-top:8px;border-top:1px solid var(--border);margin-top:12px">The answer was: <strong style="color:var(--accent)">' + rd.answer + '</strong></div>';
+    }
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+      + '<span style="background:var(--accent);color:#003d8a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px">Round ' + rd.round + '</span>'
+      + statusBadge + '</div>'
+      + '<ul style="list-style:none;display:flex;flex-direction:column;gap:8px">' + clueItems + '</ul>'
+      + bottomSection + '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function submitLateGuess(round, answer) {
+  var name = document.getElementById('late-name-' + round).value;
+  var guess = document.getElementById('late-guess-' + round).value;
+  if (!name || !guess) { showToast('Please select your name and a guess.', 'error'); return; }
+  var gs = loadState();
+  var correct = guess === answer;
+  gs.responses.push({ name: name, guess: guess, round: round, correct: correct });
+  if (correct) {
+    gs.scores[name] = (gs.scores[name] || 0) + 1;
+    showToast('Correct! +1 point for ' + name + '!', 'success');
+  } else {
+    showToast('Wrong — the answer was ' + answer + '!', 'error');
+  }
+  saveState(gs);
+  renderHistory();
+}
+
+
+function checkTeamPw() {
+  const pw = document.getElementById('team-pw').value;
+  if (pw === 'GuessMe123') {
+    document.getElementById('team-lock').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    renderGuessPanel();
+    renderLeaderboard();
+  } else {
+    document.getElementById('team-pw-error').style.display = 'block';
+    document.getElementById('team-pw').value = '';
+  }
+}
+
+</script>
+</body>
+</html>
